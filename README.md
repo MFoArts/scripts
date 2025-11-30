@@ -8,5 +8,5 @@ Script to take files from the Wix system containing Event guests who bought tick
 
 ## Usage
 
->create_db_users_from_wix.pl -dbase <CSV file export of the current MFoA users> -wixfiles <list of CSV or text files exported from all Wix events in the festival year> -o <Output CSV file containing potential new accounts to add>
+>create_db_users_from_wix.pl -dbase \<CSV file export of the current MFoA users\> -wixfiles \<list of CSV or text files exported from all Wix events in the festival year\> -o \<Output CSV file containing potential new accounts to add\>
 
