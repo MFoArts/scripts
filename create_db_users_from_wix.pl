@@ -10,3 +10,4 @@ use warnings;
 
 use Text::CSV;
 use Getopt::Long;
+use Set::Scalar;
