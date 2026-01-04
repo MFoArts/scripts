@@ -10,6 +10,7 @@ use warnings;
 use Text::CSV;
 use Getopt::Long;
 use Set::Scalar;
+use Data::Dumper;
 
 if ($#ARGV < 5) 
 {
@@ -17,7 +18,9 @@ if ($#ARGV < 5)
 }
 
 my $dbaseFile = "";
+my %dbaseMap = ();
 my @wixFiles = ();
+my %wixMap = ();
 my $outFile = "";
 
 GetOptions(	'dbaseFile|db=s'	=> \$dbaseFile,
@@ -48,7 +51,38 @@ for my $wixFile (@wixFiles)
 }
 
 my $newEmails = $wixEventGuestsEmails - $existingEmails;
-print "$newEmails\n";
+
+#print Dumper (%wixMap);
+
+open my $outFh, ">:encoding(utf8)", $outFile or die "$outFile :\t$!\n";
+my $outCSV = Text::CSV->new ({
+                binary => 1,
+				always_quote => 1,
+                auto_diag => 1 });
+
+#my @headerLine = ( "First Name", "Last Name","Email");
+#$outCSV->say($outFh, \@headerLine);
+
+my @newEmailsArr = $newEmails->members;
+for my $newEmail (sort @newEmailsArr)
+{
+		my $winInfoRef = $wixMap{$newEmail};
+		$outCSV->say($outFh, $winInfoRef);
+}
+
+close ($outFh);
+
+#print Dumper(%dbaseMap);
+
+open $outFh, ">:encoding(utf8)", "dbaseMap.csv" or die "dbaseMap.csv :\t$!\n";
+
+for my $dbaseEmail (sort keys %dbaseMap)
+{
+		my $arrayRef = $dbaseMap{$dbaseEmail};
+		$outCSV->say($outFh, $arrayRef);
+}
+
+close ($outFh);
 
 #
 #----------------------------------------------------------------------
@@ -71,13 +105,19 @@ sub inputMFoADbase
 		my $primaryEmail = $row->[9];
 		if (defined($primaryEmail))
 		{
-				$existingEmails->insert($primaryEmail);
+				$existingEmails->insert(lc($primaryEmail));
 		}
 		my $alternateEmail = $row->[26];
 		if (defined($alternateEmail))
 		{
-				$existingEmails->insert($alternateEmail);
+				$existingEmails->insert(lc($alternateEmail));
 		}
+		my $firstName = $row->[1];
+		my $lastName = $row->[2];
+
+		my @mfoaID = ($firstName, $lastName, $primaryEmail);
+		my $arrayRef = \@mfoaID;
+		$dbaseMap{$primaryEmail} = $arrayRef;
 	}
 	close $mfoafh;
 }
@@ -114,8 +154,15 @@ sub inputWixPurchase
 		my $primaryEmail = $row->[4];
 		if (defined($primaryEmail))
 		{
-				$wixEventGuestsEmails->insert($primaryEmail);
+				$wixEventGuestsEmails->insert(lc($primaryEmail));
 		}
+
+		my $firstName = $row->[2];
+		my $lastName = $row->[3];
+
+		my @wixInfo = ($firstName, $lastName, $primaryEmail);
+		my $wixInfoRef = \@wixInfo;
+		$wixMap{$primaryEmail} = $wixInfoRef;
 	}
 }
 
@@ -127,7 +174,15 @@ sub inputWixRSVP
 		my $primaryEmail = $row->[2];
 		if (defined($primaryEmail))
 		{
-			$wixEventGuestsEmails->insert($primaryEmail);
+			$wixEventGuestsEmails->insert(lc($primaryEmail));
 		}
+
+		my $firstName = $row->[0];
+		my $lastName = $row->[1];
+
+		my @wixInfo = ($firstName, $lastName, $primaryEmail);
+		my $wixInfoRef = \@wixInfo;
+		$wixMap{$primaryEmail} = $wixInfoRef;
+
 	}
 }
